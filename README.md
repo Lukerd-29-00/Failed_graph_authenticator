@@ -15,3 +15,6 @@ The graph library is not well documented, but for this problem, it really doesn'
 
 ## Graph encoding
 The graphs only support vertices from 0 to the max number - 1. They are stored internally as an adjacency matrix with the redundant half removed (because the graphs are undirected). This is serialized into booleans, which are converted into an integer via bitwise OR so that each edge is stored in only one bit.
+
+## Challenge description
+Well, I keep screwing up the modular zero knowledge proofs, so let's try graphs instead.

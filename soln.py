@@ -1,11 +1,11 @@
 from graph import *
 from pwn import *
 
-HOST = 'localhost'
-ALICE_PORT = 32775
-SERVER_PORT = 32774
+HOST = '0.cloud.chals.io'
+ALICE_PORT = 13313
+SERVER_PORT = 13512
 
-alice = remote("localhost",ALICE_PORT)
+alice = remote(HOST,ALICE_PORT)
 
 G0 = Graph.loads(alice.recvline().strip().decode("utf-8"))
 
