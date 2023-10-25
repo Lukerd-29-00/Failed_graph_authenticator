@@ -1,12 +1,15 @@
 from graph import *
-import subprocess
-import os
+from pwn import *
 
-p = subprocess.Popen(["python3", "alice.py"],cwd=os.getcwd(),stdout=subprocess.PIPE,stdin=subprocess.PIPE)
+HOST = 'localhost'
+ALICE_PORT = 32775
+SERVER_PORT = 32774
 
-G0 = Graph.loads(p.stdout.readline().strip().decode("utf-8"))
+alice = remote("localhost",ALICE_PORT)
 
-G1 = Graph.loads(p.stdout.readline().strip().decode("utf-8"))
+G0 = Graph.loads(alice.recvline().strip().decode("utf-8"))
+
+G1 = Graph.loads(alice.recvline().strip().decode("utf-8"))
 
 i = random_isomorphism(G0)
 
@@ -14,25 +17,23 @@ G2 = G0.map_vertices(i)
 
 assert G2.map_vertices(-i) == G0
 
-print(p.stdin.write(G2.dumps().encode('utf-8') + b'\n'))
-print(p.stdin.write(str(-i).encode("utf-8") + b'\n'))
-p.stdin.flush()
+alice.sendline(G2.dumps().encode('utf-8'))
+alice.sendline(str(-i).encode("utf-8"))
 
-m = Isomorphism.loads(G2,p.stdout.readline().strip().decode("utf-8"))
+m = Isomorphism.loads(G2,alice.recvline().strip().decode("utf-8"))
 
-p.stdin.write(b"y\n")
-p.stdin.flush()
+alice.sendline(b"y")
 
-print(p.stdout.readline())
+print(alice.recvline())
 
-p.kill()
+alice.close()
+
 #We use i instead of -i because we sent -i to alice and -(-i) = i.
 d = i + m
 
 assert G0.check_mapping(G1,d)
 
-
-p = subprocess.Popen(["python3", "server.py"],cwd=os.getcwd(),stdout=subprocess.PIPE,stdin=subprocess.PIPE)
+s = remote(HOST,SERVER_PORT)
 
 ROUNDS = 16
 
@@ -42,11 +43,9 @@ for _ in range(ROUNDS):
     sigma = random_isomorphism(G0)
     G2 = G0.map_vertices(sigma) #If we were using this correctly, this would be a random choice of G0 or G1. We're hacking, so we don't need to worry about that.
     generated.append((G2, sigma))
-    p.stdin.write(G2.dumps().encode('utf-8') + b'\n')
+    s.sendline(G2.dumps().encode('utf-8'))
 
-p.stdin.flush()
-
-challenges = p.stdout.readline().strip().decode("utf-8")
+challenges = s.recvline().strip().decode("utf-8")
 
 challenges = int.from_bytes(bytes.fromhex(challenges),'big')
 
@@ -58,12 +57,12 @@ for G2, sigma in generated:
     else:
         tau = sigma
     
-    p.stdin.write(str(tau).encode('utf-8') + b'\n')
-    p.stdin.flush()
+    s.sendline(str(tau).encode('utf-8'))
     challenges >>= 1
 
-p.stdout.readline()
+s.recvline()
+s.close()
 
-flag = p.stdout.readline().strip()
+flag = s.recvline().strip()
 
 print(flag)

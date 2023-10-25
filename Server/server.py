@@ -1,14 +1,9 @@
 import json
 from graph import Graph, Isomorphism
-import random
 import typing
 import os
 
-r = random.SystemRandom()
-
 ROUNDS = 16
-
-r = random.SystemRandom()
 
 with open("public_key.json",'r') as f:
     key = list(map(Graph.from_dict,json.load(f)))
